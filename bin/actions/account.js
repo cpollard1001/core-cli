@@ -9,6 +9,7 @@ var platform = require('os').platform();
 var HOME = platform !== 'win32' ? process.env.HOME : process.env.USERPROFILE;
 var DATADIR = path.join(HOME, '.storjcli');
 var KEYPATH = path.join(DATADIR, 'id_ecdsa');
+var EMAILPATH = path.join(DATADIR, 'id_email');
 
 module.exports.getInfo =  function() {
   var client = this._storj.PublicClient();
@@ -71,6 +72,7 @@ module.exports.login = function(url) {
       }
 
       fs.writeFileSync(KEYPATH, keypair.getPrivateKey());
+      fs.writeFileSync(EMAILPATH, result.email);
       log('info', 'This device has been successfully paired.');
     });
   });
@@ -81,6 +83,11 @@ module.exports.logout = function() {
   var keypair = utils.loadKeyPair();
 
   client.destroyPublicKey(keypair.getPublicKey(), function(err) {
+
+    if (storj.utils.existsSync(EMAILPATH)) {
+      fs.unlinkSync(EMAILPATH);
+    }
+
     if (err) {
       log('info', 'This device has been successfully unpaired.');
       log('warn', 'Failed to revoke key, you may need to do it manually.');

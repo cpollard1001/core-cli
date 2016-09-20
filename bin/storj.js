@@ -44,6 +44,7 @@ program._storj.PrivateClient = function(options) {
 
   return storj.BridgeClient(program.url, merge({
     keyPair: utils.loadKeyPair(),
+    email: utils.loadEmail(),
     logger: logger(program._storj.loglevel()).log
   }, options));
 };
@@ -158,7 +159,7 @@ program
   .action(actions.buckets.remove.bind(program));
 
 program
-  .command('update-bucket <bucket-id> [name] [storage] [transfer]')
+  .command('update-bucket <bucket-id> [storage] [transfer]')
   .description('updates a specific storage bucket')
   .action(actions.buckets.update.bind(program));
 
