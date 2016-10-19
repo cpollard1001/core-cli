@@ -166,30 +166,17 @@ Uploader.prototype._loopThroughFiles = function(callback) {
 };
 
 /**
- * Calculates new name when file already exists in bucket
- * @param {String} name - name of the duplicate file
- * @returns {String}
- * @private
- */
-Uploader.prototype._calculateNewName = function(name){
-  var array = name.split('.');
-  var baseIndex = Math.max(array.length - 2, 0);
-  array[baseIndex] = array[baseIndex] + '-(' + Date.now() + ')';
-  return array.join('.');
-};
-
-/**
  * check if a given file already exists in bucket
  * @private
  */
-Uploader.prototype._checkFileExistance = function(filepath, callback) {
+Uploader.prototype._checkFileExistence = function(filepath, callback) {
   var self = this;
   var filename = path.basename(filepath);
   var fileId = storj.utils.calculateFileId(self.bucket, filename);
 
   self.client.getFileInfo(self.bucket, fileId, function(err, fileInfo){
     if(fileInfo){
-      var newFilename = self._calculateNewName(filename);
+      var newFilename = new Date().toISOString() + ' ' + filename;
       log(
         'warn',
         '[ %s ] Already exists in bucket. Uploading to ' + newFilename,
@@ -424,8 +411,8 @@ Uploader.prototype.start = function(finalCallback) {
     function _beginLoop(callback) {
       self._loopThroughFiles(callback);
     },
-    function _checkFileExistance(filepath, callback) {
-      self._checkFileExistance(filepath, callback);
+    function _checkFileExistence(filepath, callback) {
+      self._checkFileExistence(filepath, callback);
     },
     function _makeTempDir(filename, filepath, callback) {
       self._makeTempDir(filename, filepath, callback);
