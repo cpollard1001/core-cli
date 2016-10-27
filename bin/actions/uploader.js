@@ -33,6 +33,7 @@ function Uploader(client, keypass, options) {
   this.fileConcurrency = options.env.fileconcurrency || 1;
   this.bucket = options.bucket;
   this.redundancy = options.env.redundancy || 0;
+  this.overwrite = options.env.overwrite;
   this.client = client(
     {
       transferConcurrency: this.shardConcurrency,
@@ -169,13 +170,19 @@ Uploader.prototype._loopThroughFiles = function(callback) {
  * check if a given file already exists in bucket
  * @private
  */
-Uploader.prototype._checkFileExistance = function(filepath, callback) {
+Uploader.prototype._checkFileExistence = function(filepath, callback) {
   var self = this;
   var filename = path.basename(filepath);
   var fileId = storj.utils.calculateFileId(self.bucket, filename);
 
   self.client.getFileInfo(self.bucket, fileId, function(err, fileInfo){
-    if(fileInfo){
+    if( fileInfo && self.overwrite ){
+      log(
+        'warn',
+        '[ %s ] Replacing file in bucket',
+        filename
+       );
+    } else if(fileInfo){
       var date = (new Date().toISOString()).replace(/:/g, ';');
       var newFilename = '(' + date + ')-' + filename;
       log(
@@ -412,8 +419,8 @@ Uploader.prototype.start = function(finalCallback) {
     function _beginLoop(callback) {
       self._loopThroughFiles(callback);
     },
-    function _checkFileExistance(filepath, callback) {
-      self._checkFileExistance(filepath, callback);
+    function _checkFileExistence(filepath, callback) {
+      self._checkFileExistence(filepath, callback);
     },
     function _makeTempDir(filename, filepath, callback) {
       self._makeTempDir(filename, filepath, callback);

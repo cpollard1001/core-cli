@@ -33,7 +33,7 @@ program.version(
   'Core: ' + storj.version.software
 );
 program.option('-u, --url <url>', 'set the base url for the api');
-program.option('-n, --byname', 'treat ids as names');
+program.option('-n, --byname', 'treat valid ids as names');
 program.option('-k, --keypass <password>', 'unlock keyring without prompt');
 program.option('-d, --debug', 'display debug data', 4);
 
@@ -301,6 +301,7 @@ program
   .option('-c, --concurrency <count>', 'max shard upload concurrency')
   .option('-C, --fileconcurrency <count>', 'max file upload concurrency', 1)
   .option('-r, --redundancy <mirrors>', 'number of mirrors to create for file')
+  .option('-o, --overwrite', 'overwrite existing file without prompt')
   .description('upload a file or files to the network and track in a bucket.' +
                '\n  upload all files in a single directory using "/path/*"\n' +
                '  or upload recursively using "/path/**/*".\n' +
