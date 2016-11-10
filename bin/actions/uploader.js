@@ -176,7 +176,7 @@ Uploader.prototype._checkFileExistence = function(filepath, callback) {
   var fileId = storj.utils.calculateFileId(self.bucket, filename);
 
   self.client.getFileInfo(self.bucket, fileId, function(err, fileInfo){
-    if( fileInfo && self.overwrite ){
+    if (fileInfo && self.overwrite) {
       log(
         'warn',
         '[ %s ] Replacing file in bucket',
