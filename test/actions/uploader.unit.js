@@ -391,6 +391,29 @@ describe('uploader', function() {
       expect(cb.callCount).to.equal(1);
       expect(cb.calledWithMatch(null, testFilePath)).to.equal(true);
     });
+
+    it('should allow file to be overwritten', function() {
+        var testFilePath = '/test/file/path/filename.xyz';
+        var testFileId = 'testfileid';
+        var testBucket = 'testbucket';
+        uploader.bucket = testBucket;
+        uploader.overwrite = true;
+        var cb = sinon.stub();
+        storjStub.utils = {
+          calculateFileId: sinon.stub().returns(testFileId)
+        };
+        clientStub.getFileInfo = sinon.stub().callsArg(2, null, {});
+
+        uploader._checkFileExistence(testFilePath, cb);
+
+        expect(storjStub.utils.calculateFileId.calledWithMatch(testBucket,
+          'filename.xyz')).to.equal(true);
+        expect(clientStub.getFileInfo.calledWithMatch(testBucket, testFileId,
+          sinon.match.func)).to.equal(true);
+        expect(cb.callCount).to.equal(1);
+        expect(cb.calledWithMatch(null, testFilePath)).to.equal(true);
+      });
+
   });
 
   describe('#_makeTempDir', function() {
