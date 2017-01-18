@@ -402,11 +402,15 @@ describe('uploader', function() {
         storjStub.utils = {
           calculateFileId: sinon.stub().returns(testFileId)
         };
-        clientStub.getFileInfo = sinon.stub().callsArg(2, null, {});
+        clientStub.getFileInfo = sinon.stub().callsArgWith(2, null, {});
 
         uploader._checkFileExistence(testFilePath, cb);
 
         expect(storjStub.utils.calculateFileId.calledWithMatch(testBucket,
+          'filename.xyz')).to.equal(true);
+        expect(LoggerStub.log.callCount).to.equal(1);
+        expect(LoggerStub.log.calledWithMatch('warn',
+          'Replacing file in bucket',
           'filename.xyz')).to.equal(true);
         expect(clientStub.getFileInfo.calledWithMatch(testBucket, testFileId,
           sinon.match.func)).to.equal(true);
