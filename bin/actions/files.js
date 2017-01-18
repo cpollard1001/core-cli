@@ -1,9 +1,6 @@
 'use strict';
 var log = require('./../logger')().log;
 var utils = require('./../utils');
-var fs = require('fs');
-var path = require('path');
-var through = require('through');
 var storj = require('storj-lib');
 
 module.exports.list = function(bucketid) {
@@ -35,9 +32,9 @@ module.exports.getInfo = function(bucketid, fileid) {
    fileid = this._storj.getRealFileId(bucketid, fileid);
 
   client.getFileInfo(bucketid, fileid, function(err, file) {
-     if (err) {
-       return log('error', err.message);
-     }
+    if (err) {
+      return log('error', err.message);
+    }
 
     log(
       'info',
@@ -47,11 +44,46 @@ module.exports.getInfo = function(bucketid, fileid) {
   });
 };
 
+module.exports.listMirrors = function(bucketid, fileid) {
+   var client = this._storj.PrivateClient();
+   bucketid = this._storj.getRealBucketId(bucketid);
+   fileid = this._storj.getRealFileId(bucketid, fileid);
+
+  client.listMirrorsForFile(bucketid, fileid, function(err, mirrors) {
+    if (err) {
+      return log('error', err.message);
+    }
+
+    mirrors.forEach((s, i) => {
+      log('info', '');
+      log('info', 'Established');
+      log('info', '-----------');
+      log('info', 'Shard: %s', [i]);
+      s.established.forEach((s, i) => {
+        if (i === 0) {
+          log('info', 'Hash: %s', [s.shardHash]);
+        }
+        log('info', '    %s', [storj.utils.getContactURL(s.contact)]);
+      });
+      log('info', '');
+      log('info', 'Available');
+      log('info', '---------');
+      log('info', 'Shard: %s', [i]);
+      s.available.forEach((s, i) => {
+        if (i === 0) {
+          log('info', 'Hash: %s', [s.shardHash]);
+        }
+        log('info', '    %s', [storj.utils.getContactURL(s.contact)]);
+      });
+    });
+  });
+};
+
 module.exports.remove = function(id, fileId, env) {
   var client = this._storj.PrivateClient();
   var keypass = this._storj.getKeyPass();
   id = this._storj.getRealBucketId(id);
-  fileid = this._storj.getRealFileId(id, fileid);
+  fileId = this._storj.getRealFileId(id, fileId);
 
   function destroyFile() {
     utils.getKeyRing(keypass, function(keyring) {
@@ -76,41 +108,6 @@ module.exports.remove = function(id, fileId, env) {
   destroyFile();
 };
 
-module.exports.mirror = function(bucket, file, env) {
-  var client = this._storj.PrivateClient({ requestTimeout: 30000 });
-  bucket = this._storj.getRealBucketId(bucket);
-  file = this._storj.getRealFileId(bucket, file);
-
-  if (parseInt(env.redundancy) > 12 || parseInt(env.redundancy) < 1) {
-    return log('error', '%s is an invalid Redundancy value.', env.redundancy);
-  }
-
-  log(
-    'info',
-    'Establishing %s mirrors per shard for redundancy',
-    [env.redundancy]
-  );
-  client.replicateFileFromBucket(
-    bucket,
-    file,
-    parseInt(env.redundancy),
-    function(err, replicas) {
-      if (err) {
-        return log('error', err.message);
-      }
-
-      replicas.forEach(function(shard, i) {
-        log('info', 'Shard %s establishing mirrors to %s nodes', [
-          i,
-          shard.length
-        ]);
-      });
-
-      process.exit();
-    }
-  );
-};
-
 module.exports.stream = function(bucket, id, env) {
   var self = this;
   var client = this._storj.PrivateClient({
@@ -119,7 +116,6 @@ module.exports.stream = function(bucket, id, env) {
   var keypass = this._storj.getKeyPass();
   bucket = this._storj.getRealBucketId(bucket);
   id = this._storj.getRealFileId(bucket, id);
-
   utils.getKeyRing(keypass, function(keyring) {
     var secret = keyring.get(id);
 
@@ -129,10 +125,9 @@ module.exports.stream = function(bucket, id, env) {
 
     var decrypter = new storj.DecryptStream(secret);
     var exclude = env.exclude.split(',');
-
     client.createFileStream(bucket, id, function(err, stream) {
       if (err) {
-        return process.stderr.write(err.message);
+        return log('error', err.message);
       }
 
       stream.on('error', function(err) {
@@ -148,7 +143,7 @@ module.exports.stream = function(bucket, id, env) {
           self,
           bucket,
           id,
-          { exclude: env.exclude.join(',') }
+          { exclude: exclude.join(',') }
         );
       }).pipe(decrypter).pipe(process.stdout);
     });

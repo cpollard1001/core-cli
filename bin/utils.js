@@ -13,7 +13,6 @@ tmp.setGracefulCleanup();
 
 var HOME = platform !== 'win32' ? process.env.HOME : process.env.USERPROFILE;
 var DATADIR = path.join(HOME, '.storjcli');
-var KEYPATH = path.join(DATADIR, 'id_ecdsa');
 
 module.exports.getConfirmation = function(msg, callback) {
   prompt.start();
@@ -237,7 +236,7 @@ module.exports.resetkeyring = function() {
 
   function confirm() {
       module.exports.getConfirmation(
-      'Are REALLY you sure you want to destroy your keyring?',
+      'Are you REALLY sure you want to destroy your keyring?',
       destroyKeyRing
     );
   }
